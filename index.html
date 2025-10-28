@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComputeLab • Unified Computational Platform</title>
+<meta name="theme-color" content="#0f172a">
+
+<script src="https://unpkg.com/3dmol@2.4.2/build/3dmol-min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2/umd/Recharts.min.js"></script>
+
+<style>
+/* --- Global Styles & Dashboard CSS --- */
+:root {
+  --bg: #0b1220;
+  --panel: #0f172a;
+  --card: #0a0f1a;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #7dd3fc;
+  --line: #1f2937;
+  --green: #34d399;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --sans: Inter, system-ui, Arial;
+  --mono: ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.6;
+}
+
+/* Header & Layout (Adapted from original HTML) */
+header {
+  padding: 30px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.header-content {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+  font-size: 28px;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.tagline {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.container {
+  max-width: 1600px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 20px;
+}
+
+.sidebar {
+  background: var(--panel);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.toolkit-list { list-style: none; }
+
+.toolkit-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.2s;
+}
+
+.toolkit-item:hover { background: rgba(125, 211, 252, 0.1); }
+
+.toolkit-item.active {
+  background: var(--blue);
+  color: white;
+}
+
+.content-area {
+  background: var(--panel);
+  /* Padding removed from content-area as the React component adds its own padding */
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.card-placeholder { background: var(--card); padding: 16px; margin: 20px; border-radius: 8px; }
+
+.pill { display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.pill-new { background: rgba(52, 211, 153, 0.1); color: var(--green); border: 1px solid var(--green); }
+.pill-hot { background: rgba(248, 113, 113, 0.1); color: var(--red); border: 1px solid var(--red); }
+
+/* --- CSS for Mock React Components (Used in Cellular Dynamics) --- */
+
+/* Layout helpers (mimicking Tailwind classes used in the React component) */
+.w-full { width: 100%; }
+.p-6 { padding: 1.5rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.grid { display: grid; }
+/* Specific grid definition for the React layout */
+.grid-cols-3-react { grid-template-columns: 1fr 1.5fr 1fr; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.gap-6 { gap: 1.5rem; }
+.gap-2 { gap: 0.5rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.text-sm { font-size: 0.875rem; }
+.text-xs { font-size: 0.75rem; }
+.text-muted-foreground { color: var(--muted); }
+
+/* Mock Components Styling */
+.mock-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.mock-card.header-card {
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    color: white;
+}
+
+.mock-card-header { padding: 1rem 1.5rem; }
+
+.mock-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+
+.mock-card.header-card .mock-card-title {
+    color: white;
+    font-size: 1.5rem;
+}
+.mock-card-description {
+    color: var(--muted);
+    margin-top: 0.25rem;
+}
+
+.mock-card.header-card .mock-card-description {
+    color: #e0f2fe;
+}
+
+.mock-card-content { padding: 1.5rem; }
+
+.mock-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.mock-select {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+}
+
+.mock-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+}
+
+.mock-btn-default { background-color: var(--blue); color: white; }
+.mock-btn-destructive { background-color: var(--red); color: white; }
+.mock-btn-outline { border: 1px solid var(--line); color: var(--text); background: transparent; }
+.mock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mock-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.mock-alert {
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid var(--blue);
+    color: var(--blue);
+}
+
+.mock-tabs-list { display: flex; border-bottom: 1px solid var(--line); }
+
+.mock-tabs-trigger {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+}
+
+.mock-tabs-trigger[data-state="active"] {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.mock-progress {
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mock-progress-indicator {
+    height: 100%;
+    background: var(--accent);
+}
+
+.react-canvas {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .sidebar { margin-bottom: 20px; }
+  .grid-cols-3-react { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <div>
+        <h1>ComputeLab</h1>
+        <div class="tagline">Advanced Computational Platform</div>
+    </div>
+    <div>
+        <button class="mock-btn mock-btn-outline">Login</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="main-grid">
+    <aside class="sidebar">
+      <h3>Toolkits</h3>
+      <ul class="toolkit-list">
+        <li class="toolkit-item" data-section="retrosynthesis">
+          🔬 Retrosynthesis <span class="pill pill-hot">HOT</span>
+        </li>
+         <li class="toolkit-item" data-section="antibody-docking">
+          💉 Antibody Docking <span class="pill pill-new">NEW</span>
+        </li>
+        <li class="toolkit-item active" data-section="cellular-dynamics">
+          🦠 Cellular Dynamics <span class="pill pill-new">NEW</span>
+        </li>
+        <li class="toolkit-item" data-section="visualization">
+          📈 Visualization
+        </li>
+      </ul>
+    </aside>
+
+    <main class="content-area">
+      
+      <section id="retrosynthesis" class="section">
+        <h2>Retrosynthesis Mapping</h2>
+        <div class="card-placeholder">Content for Retrosynthesis (Static HTML/JS)</div>
+      </section>
+       <section id="antibody-docking" class="section">
+        <h2>Antibody-Antigen Docking</h2>
+        <div class="card-placeholder">Content for Antibody Docking (Static HTML/JS)</div>
+      </section>
+       <section id="visualization" class="section">
+        <h2>Visualization</h2>
+        <div class="card-placeholder">Content for Visualization</div>
+      </section>
+
+      <section id="cellular-dynamics" class="section active">
+        <div id="cell-model-root">
+            <p style="padding: 20px; text-align: center; color: var(--muted);">Loading React Simulation Environment... (Compiling JSX in browser)</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+// Navigation Logic
+function setupNavigation() {
+  const toolkitItems = document.querySelectorAll('.toolkit-item');
+  toolkitItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const sectionId = this.dataset.section;
+      navigateTo(sectionId);
+    });
+  });
+}
+
+function navigateTo(sectionId) {
+    const toolkitItems = document.querySelectorAll('.toolkit-item');
+    const sections = document.querySelectorAll('.section');
+
+    // Update sidebar
+    toolkitItems.forEach(i => i.classList.remove('active'));
+    const activeItem = document.querySelector(`.toolkit-item[data-section="${sectionId}"]`);
+    if (activeItem) {
+        activeItem.classList.add('active');
+    }
+
+    // Update content
+    sections.forEach(s => s.classList.remove('active'));
+    const activeSection = document.getElementById(sectionId);
+    if (activeSection) {
+        activeSection.classList.add('active');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setupNavigation();
+});
+</script>
+
+<script type="text/babel" data-presets="react">
+
+    // Access global variables provided by CDN links
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    // Recharts must be accessed via the global Recharts object
+    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } = Recharts;
+
+    // --- Mock UI Components (Replacing the missing UI library) ---
+    // These use the CSS classes defined in the <style> block above.
+
+    const Card = ({ children, className }) => <div className={`mock-card ${className || ''}`}>{children}</div>;
+    const CardHeader = ({ children }) => <div className="mock-card-header">{children}</div>;
+    const CardTitle = ({ children, className }) => <h3 className={`mock-card-title ${className || ''}`}>{children}</h3>;
+    const CardDescription = ({ children, className }) => <p className={`mock-card-description ${className || ''}`}>{children}</p>;
+    const CardContent = ({ children, className }) => <div className={`mock-card-content ${className || ''}`}>{children}</div>;
+    
+    const Button = ({ children, onClick, variant, className, disabled }) => {
+        let variantClass = 'mock-btn-default';
+        if (variant === 'destructive') variantClass = 'mock-btn-destructive';
+        if (variant === 'outline') variantClass = 'mock-btn-outline';
+        return (
+            <button onClick={onClick} className={`mock-btn ${variantClass} ${className || ''}`} disabled={disabled}>
+                {children}
+            </button>
+        );
+    }
+
+    const Label = ({ children }) => <label className="mock-label">{children}</label>;
+    
+    // Mock Select (using basic HTML select)
+    const SimpleSelect = ({ value, onValueChange, children, disabled }) => (
+        <select className="mock-select" value={value} onChange={(e) => onValueChange(e.target.value)} disabled={disabled}>
+            {children}
+        </select>
+    );
+    const SimpleSelectItem = ({ value, children }) => <option value={value}>{children}</option>;
+
+    // Mock Slider (using basic HTML range input)
+    const SimpleSlider = ({ value, onValueChange, min, max, step, disabled }) => (
+        <input 
+            type="range" 
+            value={value[0]} 
+            onChange={(e) => onValueChange([parseFloat(e.target.value)])}
+            min={min} max={max} step={step} disabled={disabled}
+            style={{ width: '100%' }}
+        />
+    );
+
+    const Badge = ({ children, className }) => <span className={`mock-badge ${className || ''}`}>{children}</span>;
+    const Alert = ({ children }) => <div className="mock-alert">{children}</div>;
+    const AlertDescription = ({ children }) => <div>{children}</div>;
+
+    // Mock Tabs component
+    const Tabs = ({ defaultValue, children, className }) => {
+        const [activeTab, setActiveTab] = useState(defaultValue);
+        const content = React.Children.map(children, child => {
+            if (child.type === TabsList) {
+                return React.cloneElement(child, { activeTab, setActiveTab });
+            }
+            if (child.type === TabsContent) {
+                return child.props.value === activeTab ? child : null;
+            }
+            return child;
+        });
+        return <div className={className}>{content}</div>;
+    };
+
+    const TabsList = ({ children, activeTab, setActiveTab, className }) => {
+        const triggers = React.Children.map(children, child => {
+            return React.cloneElement(child, { 
+                isActive: child.props.value === activeTab, 
+                onClick: () => setActiveTab(child.props.value) 
+            });
+        });
+        return <div className={`mock-tabs-list ${className || ''}`}>{triggers}</div>;
+    };
+
+    const TabsTrigger = ({ children, isActive, onClick }) => (
+        <button className="mock-tabs-trigger" data-state={isActive ? "active" : "inactive"} onClick={onClick}>
+            {children}
+        </button>
+    );
+
+    const TabsContent = ({ children, className }) => <div className={className}>{children}</div>;
+
+    const Progress = ({ value }) => (
+        <div className="mock-progress">
+            <div className="mock-progress-indicator" style={{ width: `${value}%` }}></div>
+        </div>
+    );
+
+    // --- Cell Line Database (Simplified data) ---
+    const cellLineDatabase = {
+        'HeLa': { type: 'Cancer', origin: 'Cervical', doublingTime: 24, characteristics: { adherent: true }, media: 'DMEM + 10% FBS' },
+        'MCF-7': { type: 'Cancer', origin: 'Breast', doublingTime: 29, characteristics: { adherent: true }, media: 'EMEM + 10% FBS' },
+        'A549': { type: 'Cancer', origin: 'Lung', doublingTime: 22, characteristics: { adherent: true }, media: 'F-12K + 10% FBS' },
+        'HEK293': { type: 'Normal', origin: 'Kidney', doublingTime: 20, characteristics: { adherent: true }, media: 'DMEM + 10% FBS' },
+        'Jurkat': { type: 'Cancer', origin: 'T-cell', doublingTime: 48, characteristics: { adherent: false }, media: 'RPMI-1640' },
+    };
+
+    // --- Main React Component (CellExperimentalModel) ---
+    const CellExperimentalModel = () => {
+
+        // Core state
+        const [selectedCellLine, setSelectedCellLine] = useState('HeLa');
+        const [isSimulating, setIsSimulating] = useState(false);
+        const [simulationTime, setSimulationTime] = useState(0);
+        const [cellPopulation, setCellPopulation] = useState([]);
+        const [experimentData, setExperimentData] = useState([]);
+        const canvasRef = useRef(null);
+        const animationRef = useRef(null);
+
+        // Environmental conditions
+        const [environment, setEnvironment] = useState({ temperature: 37, pH: 7.4 });
+
+        // Treatment conditions
+        const [treatment, setTreatment] = useState({ type: 'none', concentration: 0 });
+
+        // Experimental parameters
+        const [experimentParams, setExperimentParams] = useState({
+            duration: 72, timeInterval: 1, initialCells: 500 // Reduced initial cells for browser performance
+        });
+
+        // Initialize cell population
+        const initializeCells = useCallback(() => {
+            const cells = [];
+            const cellLine = cellLineDatabase[selectedCellLine];
+            
+            // Use fixed dimensions for initialization context
+            const canvasWidth = 800;
+            const canvasHeight = 600;
+
+            for (let i = 0; i < experimentParams.initialCells; i++) {
+                cells.push({
+                    id: i,
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
+                    radius: 8 + Math.random() * 2,
+                    state: 'viable',
+                    cycle: ['G0/G1', 'S', 'G2/M'][Math.floor(Math.random() * 3)],
+                    age: Math.random() * cellLine.doublingTime,
+                    health: 0.8 + Math.random() * 0.2,
+                    mobility: cellLine.characteristics.adherent ? 0.5 : 2.0
+                });
+            }
+            setCellPopulation(cells);
+        }, [selectedCellLine, experimentParams.initialCells]);
+
+        // Simulate cellular dynamics (Logic adapted from original component)
+        const simulateCellDynamics = useCallback(() => {
+            setCellPopulation(prevCells => {
+                const cellLine = cellLineDatabase[selectedCellLine];
+                // Create a deep copy to ensure immutability
+                const newCells = prevCells.map(cell => ({...cell})); 
+                const toAdd = [];
+                
+                newCells.forEach((cell) => {
+                    // Environmental effects (simplified)
+                    const envEffect = Math.abs(environment.temperature - 37) > 2 ? 0.98 : 1.0;
+                    cell.health *= envEffect;
+                    
+                    // Drug effects (simplified Hill equation)
+                    if (treatment.type === 'drug' && treatment.concentration > 0) {
+                        const ic50 = 10; 
+                        const effect = 1 / (1 + Math.pow(treatment.concentration / ic50, 1.5));
+                        cell.health *= effect;
+                    }
+                    
+                    cell.age += experimentParams.timeInterval;
+                    
+                    // Cell division (simplified)
+                    if (cell.state === 'viable' && cell.health > 0.5 && cell.age > cellLine.doublingTime) {
+                        if (newCells.length + toAdd.length < 3000) { // Limit max cells
+                            toAdd.push({
+                                ...cell,
+                                id: Math.random(),
+                                x: cell.x + (Math.random() - 0.5) * 20,
+                                y: cell.y + (Math.random() - 0.5) * 20,
+                                age: 0,
+                                health: 0.9,
+                            });
+                            cell.age = 0;
+                            cell.health = 0.9;
+                        }
+                    }
+                    
+                    // Cell death
+                    if (cell.health < 0.2 && cell.state === 'viable') {
+                        cell.state = 'apoptotic';
+                    }
+                    
+                    // Cell movement
+                    if (cell.state === 'viable') {
+                        cell.x += (Math.random() - 0.5) * cell.mobility * 2;
+                        cell.y += (Math.random() - 0.5) * cell.mobility * 2;
+                        // Keep cells within bounds (assuming 800x600 canvas)
+                        cell.x = Math.max(10, Math.min(790, cell.x));
+                        cell.y = Math.max(10, Math.min(590, cell.y));
+                    }
+                });
+                
+                // Filter out apoptotic cells randomly over time
+                const remainingCells = newCells.filter(c => c.state !== 'apoptotic' || Math.random() > 0.1);
+                return [...remainingCells, ...toAdd];
+            });
+        }, [selectedCellLine, environment, treatment, experimentParams.timeInterval]);
+
+        // Render cells on canvas
+        const renderCells = useCallback(() => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Background (Light color as in original visualization)
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw cells
+            cellPopulation.forEach(cell => {
+                ctx.beginPath();
+                ctx.arc(cell.x, cell.y, cell.radius, 0, Math.PI * 2);
+                
+                if (cell.state === 'viable') {
+                    const green = Math.floor(150 + cell.health * 105);
+                    const red = Math.floor(50 + (1 - cell.health) * 150);
+                    ctx.fillStyle = `rgb(${red}, ${green}, 100)`;
+                } else {
+                    ctx.fillStyle = '#ffa500'; // Apoptotic (Orange)
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+
+            // Info Overlay
+            ctx.fillStyle = '#000';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Cells: ${cellPopulation.length}`, 20, 25);
+            ctx.fillText(`Time: ${simulationTime}h`, 20, 45);
+
+        }, [cellPopulation, simulationTime]);
+
+        // Efficient Animation loop
+        useEffect(() => {
+            if (isSimulating) {
+                const step = () => {
+                    simulateCellDynamics();
+                    setSimulationTime(prevTime => {
+                        const newTime = prevTime + experimentParams.timeInterval;
+                        if (newTime >= experimentParams.duration) {
+                            setIsSimulating(false);
+                            return experimentParams.duration;
+                        } else {
+                            animationRef.current = setTimeout(step, 50); // ~20 FPS
+                        }
+                        return newTime;
+                    });
+                };
+                
+                animationRef.current = setTimeout(step, 50);
+                
+                return () => {
+                    if (animationRef.current) {
+                        clearTimeout(animationRef.current);
+                    }
+                };
+            }
+        }, [isSimulating, experimentParams.timeInterval, experimentParams.duration, simulateCellDynamics]);
+
+        // Data collection effect
+        useEffect(() => {
+            if (simulationTime % 6 === 0) {
+                if (cellPopulation.length > 0 || simulationTime === 0) {
+                    const viable = cellPopulation.filter(c => c.state === 'viable').length;
+                    const total = cellPopulation.length;
+                    
+                    const dataPoint = {
+                        time: simulationTime,
+                        total,
+                        viable,
+                        viability: (total > 0 ? (viable / total) * 100 : 100),
+                    };
+                    setExperimentData(prev => {
+                        if (prev.length === 0 || prev[prev.length - 1].time < simulationTime) {
+                            return [...prev, dataPoint];
+                        }
+                        return prev;
+                    });
+                }
+            }
+        }, [simulationTime, cellPopulation]);
+
+
+        // Render cells whenever population or time updates
+        useEffect(() => {
+            renderCells();
+        }, [renderCells]);
+
+        // Initialize cells on mount or critical parameter change
+        useEffect(() => {
+            // Ensure simulation stops before re-initializing
+            setIsSimulating(false);
+            setSimulationTime(0);
+            setExperimentData([]);
+            initializeCells();
+        }, [selectedCellLine, experimentParams.initialCells]); 
+
+        // Start/stop simulation
+        const toggleSimulation = () => {
+            if (isSimulating) {
+                setIsSimulating(false);
+            } else {
+                if (simulationTime >= experimentParams.duration) {
+                   resetExperiment();
+                }
+                 // Delay start slightly to allow reset to complete if needed
+                setTimeout(() => setIsSimulating(true), 10); 
+            }
+        };
+
+        const resetExperiment = () => {
+            setIsSimulating(false);
+            setSimulationTime(0);
+            setExperimentData([]);
+            initializeCells();
+        }
+
+        // Calculate statistics
+        const statistics = useMemo(() => {
+            const viableCount = cellPopulation.filter(c => c.state === 'viable').length;
+            const totalCount = cellPopulation.length;
+            const viability = totalCount > 0 ? ((viableCount / totalCount) * 100).toFixed(1) : 0;
+
+            return {
+                viability: viability,
+                totalCells: totalCount,
+            };
+        }, [cellPopulation]);
+
+        const cellLineInfo = cellLineDatabase[selectedCellLine];
+
+        // JSX Rendering (Using Mock Components)
+        return (
+            <div className="w-full mx-auto p-6 space-y-6">
+                {/* Header */}
+                <Card className="header-card">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>In Silico Cell Line Experimental Platform</CardTitle>
+                                <CardDescription>Dynamic cellular modeling with real-time simulation and analysis</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Badge>{isSimulating ? '⚡ Simulating' : '⏸️ Ready'}</Badge>
+                                <Badge>🕒 {simulationTime}h / {experimentParams.duration}h</Badge>
+                            </div>
+                        </div>
+                    </CardHeader>
+                </Card>
+
+                {/* Main Interface */}
+                <div className="grid grid-cols-3-react gap-6">
+                    
+                    {/* Control Panel (Column 1) */}
+                    <div className="space-y-4">
+                        
+                        {/* Cell Line Selection */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>🧬 Cell Line Selection</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <Label>Cell Line</Label>
+                                    <SimpleSelect value={selectedCellLine} onValueChange={setSelectedCellLine} disabled={isSimulating || simulationTime > 0}>
+                                        {Object.keys(cellLineDatabase).map(key => (
+                                            <SimpleSelectItem key={key} value={key}>{key} ({cellLineDatabase[key].type})</SimpleSelectItem>
+                                        ))}
+                                    </SimpleSelect>
+                                </div>
+                                {cellLineInfo && (
+                                    <Alert>
+                                        <AlertDescription>
+                                            <strong>Doubling Time:</strong> {cellLineInfo.doublingTime}h<br/>
+                                            <strong>Origin:</strong> {cellLineInfo.origin}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Environmental Conditions */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>🌡️ Culture Conditions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div>
+                                    <div className="flex justify-between">
+                                        <Label>Temperature (°C)</Label>
+                                        <span className="text-sm">{environment.temperature}</span>
+                                    </div>
+                                    <SimpleSlider
+                                        value={[environment.temperature]}
+                                        onValueChange={([v]) => setEnvironment({...environment, temperature: v})}
+                                        min={30} max={42} step={0.5}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Treatment */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>💊 Treatment</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div>
+                                    <Label>Treatment Type</Label>
+                                    <SimpleSelect value={treatment.type} onValueChange={(v) => setTreatment({...treatment, type: v})}>
+                                        <SimpleSelectItem value="none">None</SimpleSelectItem>
+                                        <SimpleSelectItem value="drug">Drug/Compound</SimpleSelectItem>
+                                    </SimpleSelect>
+                                </div>
+
+                                {treatment.type === 'drug' && (
+                                    <div>
+                                        <div className="flex justify-between">
+                                            <Label>Concentration (μM)</Label>
+                                            <span className="text-sm">{treatment.concentration}</span>
+                                        </div>
+                                        <SimpleSlider
+                                            value={[treatment.concentration]}
+                                            onValueChange={([v]) => setTreatment({...treatment, concentration: v})}
+                                            min={0} max={100} step={1}
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Simulation Controls */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>⚙️ Simulation Control</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={toggleSimulation}
+                                        className="w-full"
+                                        variant={isSimulating ? "destructive" : "default"}
+                                    >
+                                        {isSimulating ? <>⏸️ Pause</> : <>▶️ Start</>}
+                                    </Button>
+                                    <Button onClick={resetExperiment} variant="outline" className="w-full">
+                                        🔄 Reset
+                                    </Button>
+                                </div>
+
+                                <Progress value={(simulationTime / experimentParams.duration) * 100} />
+
+                                 <div>
+                                    <div className="flex justify-between">
+                                        <Label>Initial Cells</Label>
+                                        <span className="text-sm">{experimentParams.initialCells}</span>
+                                    </div>
+                                    <SimpleSlider
+                                        value={[experimentParams.initialCells]}
+                                        onValueChange={([v]) => setExperimentParams({...experimentParams, initialCells: parseInt(v)})}
+                                        min={100} max={1000} step={50}
+                                        disabled={isSimulating || simulationTime > 0}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between">
+                                        <Label>Duration (h)</Label>
+                                        <span className="text-sm">{experimentParams.duration}</span>
+                                    </div>
+                                    <SimpleSlider
+                                        value={[experimentParams.duration]}
+                                        onValueChange={([v]) => setExperimentParams({...experimentParams, duration: parseInt(v)})}
+                                        min={24} max={168} step={12}
+                                        disabled={isSimulating}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Visualization Panel (Column 2) */}
+                    <div className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>👁️ Live Cell Culture</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <canvas
+                                    ref={canvasRef}
+                                    width={800}
+                                    height={600}
+                                    className="w-full react-canvas"
+                                    style={{ aspectRatio: '800 / 600' }}
+                                />
+                            </CardContent>
+                        </Card>
+
+                         {/* Quick Stats */}
+                        <div className="grid grid-cols-2 gap-2">
+                            <Card>
+                                <CardContent style={{padding: '1rem'}}>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{statistics.viability}%</div>
+                                    <p className="text-xs text-muted-foreground">Viability</p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent style={{padding: '1rem'}}>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 'bold'}}>{statistics.totalCells}</div>
+                                    <p className="text-xs text-muted-foreground">Total Cells</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* Analysis Panel (Column 3) */}
+                    <div className="space-y-4">
+                        <Tabs defaultValue="growth" className="w-full">
+                            <TabsList>
+                                <TabsTrigger value="growth">Growth</TabsTrigger>
+                                <TabsTrigger value="viability">Viability</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="growth" className="space-y-4">
+                                <Card>
+                                    <CardHeader><CardTitle>Growth Curve</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <div style={{ height: 300 }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <LineChart data={experimentData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                                    <XAxis dataKey="time" stroke="#ccc" label={{ value: 'Time (h)', position: 'insideBottom', offset: -5, fill: '#ccc' }} />
+                                                    <YAxis stroke="#ccc" label={{ value: 'Cell Count', angle: -90, position: 'insideLeft', fill: '#ccc' }} />
+                                                    <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none', color: '#fff' }} />
+                                                    <Legend wrapperStyle={{color: '#ccc'}} />
+                                                    <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" dot={false} />
+                                                    <Line type="monotone" dataKey="viable" stroke="#82ca9d" name="Viable" dot={false} />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            <TabsContent value="viability" className="space-y-4">
+                                <Card>
+                                    <CardHeader><CardTitle>Cell Viability Over Time</CardTitle></CardHeader>
+                                    <CardContent>
+                                    <div style={{ height: 300 }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={experimentData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                                    <XAxis dataKey="time" stroke="#ccc" />
+                                                    <YAxis stroke="#ccc" domain={[0, 100]} />
+                                                    <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none', color: '#fff' }} />
+                                                    <Area type="monotone" dataKey="viability" stroke="#82ca9d" fill="#82ca9d" name="Viability %" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+// Render the React component into the root DIV
+// We use a slight delay to ensure the DOM is ready when Babel finishes compiling.
+setTimeout(() => {
+    const rootElement = document.getElementById('cell-model-root');
+    if (rootElement) {
+        // Clear the loading message
+        rootElement.innerHTML = ''; 
+        // Using React 18 createRoot API
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(<CellExperimentalModel />);
+    }
+}, 100);
+
+</script>
+
+</body>
+</html>
